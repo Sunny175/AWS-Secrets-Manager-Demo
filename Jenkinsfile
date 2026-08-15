@@ -6,8 +6,8 @@ pipeline {
         AWS_CREDENTIALS_ID = '' // Set to 'aws-credentials' if using Jenkins Credentials Manager, or leave '' to use EC2 IAM Role
         ECR_REPO_NAME      = 'watchmode-movie-app'
         APP_NAME           = 'watchmode-movie-app'
-        ECS_CLUSTER_NAME   = 'watchmode-cluster' // Set to your ECS cluster name in AWS
-        ECS_SERVICE_NAME   = 'watchmode-service' // Set to your ECS service name in AWS
+        ECS_CLUSTER_NAME   = 'movie-api-cluster' // Set to your ECS cluster name in AWS
+        ECS_SERVICE_NAME   = 'movie-api-service' // Set to your ECS service name in AWS
         IMAGE_TAG          = "${BUILD_NUMBER}"
     }
 
