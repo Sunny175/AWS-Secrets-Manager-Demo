@@ -2,7 +2,7 @@ spring:
   application:
     name: AWS-Secrets-Manager-Demo
   config:
-    import: "optional:aws-secretsmanager:/AWS-Secrets-Manager-Demo/third-party-token"
+    import: "optional:arn:aws:secretsmanager:us-east-1:649089875063:secret:/AWS-Secrets-Manager-Demo/third-party-token*"
 
 cloud:
   aws:
