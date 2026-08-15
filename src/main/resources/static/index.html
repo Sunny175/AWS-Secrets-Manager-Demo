@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CineStream | Watchmode Movie Discovery & Streaming Guide</title>
+    <meta name="description" content="Discover movies and find where to stream, rent, or buy them across Netflix, Prime, HBO Max, and more with Watchmode API & AWS Integration.">
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- Main CSS -->
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+    <!-- Background ambient lighting -->
+    <div class="ambient-glow glow-1"></div>
+    <div class="ambient-glow glow-2"></div>
+
+    <!-- Navigation Header -->
+    <header class="navbar">
+        <div class="nav-container">
+            <div class="logo">
+                <i class="fa-solid fa-clapperboard logo-icon"></i>
+                <span class="logo-text">Cine<span class="highlight">Stream</span></span>
+                <span class="badge badge-aws" id="awsStatusBadge">
+                    <i class="fa-brands fa-aws"></i> AWS Fargate Ready
+                </span>
+            </div>
+            
+            <div class="nav-actions">
+                <button class="btn btn-glass" id="btnApiKeyConfig" title="Configure Watchmode API Key">
+                    <i class="fa-solid fa-key"></i>
+                    <span id="apiKeyStatusLabel">API Key</span>
+                </button>
+                <div class="status-pill" id="modePill">
+                    <span class="dot"></span>
+                    <span id="modeText">Connecting...</span>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="main-content">
+        <!-- Hero Section -->
+        <section class="hero-section">
+            <div class="hero-content">
+                <span class="hero-subtitle"><i class="fa-solid fa-sparkles"></i> Powered by Watchmode API & AWS Secrets Manager</span>
+                <h1 class="hero-title">Find Where to Stream <span class="gradient-text">Any Movie</span></h1>
+                <p class="hero-description">
+                    Search thousands of titles, compare prices across Netflix, Prime Video, Apple TV, and Max, and start watching instantly.
+                </p>
+
+                <!-- Search Bar Container -->
+                <div class="search-box-wrapper">
+                    <form id="searchForm" class="search-box">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="searchInput" placeholder="Search movies (e.g. Inception, Interstellar, Batman)..." autocomplete="off" required>
+                        <button type="submit" class="btn btn-primary btn-search">
+                            <span>Search</span>
+                            <i class="fa-solid fa-arrow-right"></i>
+                        </button>
+                    </form>
+                </div>
+
+                <!-- Genre Quick Filters -->
+                <div class="filter-chips">
+                    <button class="chip active" data-genre="all"><i class="fa-solid fa-fire"></i> All Popular</button>
+                    <button class="chip" data-genre="action"><i class="fa-solid fa-gun"></i> Action</button>
+                    <button class="chip" data-genre="sci-fi"><i class="fa-solid fa-user-astronaut"></i> Sci-Fi</button>
+                    <button class="chip" data-genre="drama"><i class="fa-solid fa-masks-theater"></i> Drama</button>
+                    <button class="chip" data-genre="top-rated"><i class="fa-solid fa-star"></i> Top Rated</button>
+                </div>
+            </div>
+        </section>
+
+        <!-- Movie Grid Section -->
+        <section class="movies-section">
+            <div class="section-header">
+                <h2 id="sectionTitle" class="section-title">Popular Releases</h2>
+                <span id="resultsCount" class="results-count">Showing top results</span>
+            </div>
+
+            <!-- Loader -->
+            <div id="loader" class="loader-container hidden">
+                <div class="spinner"></div>
+                <p>Querying Watchmode API & AWS Secrets...</p>
+            </div>
+
+            <!-- Movies Grid -->
+            <div id="movieGrid" class="movie-grid">
+                <!-- Dynamically populated -->
+            </div>
+
+            <!-- Empty State -->
+            <div id="emptyState" class="empty-state hidden">
+                <i class="fa-solid fa-film empty-icon"></i>
+                <h3>No movies found</h3>
+                <p>Try searching for a different movie title or check your API key configuration.</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- Movie Details Modal -->
+    <div id="movieModal" class="modal-overlay hidden">
+        <div class="modal-card glass-panel">
+            <button class="modal-close" id="modalCloseBtn" aria-label="Close modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            
+            <div class="modal-body" id="modalBody">
+                <!-- Loaded dynamically -->
+            </div>
+        </div>
+    </div>
+
+    <!-- API Key Config Modal -->
+    <div id="apiKeyModal" class="modal-overlay hidden">
+        <div class="modal-card modal-sm glass-panel">
+            <button class="modal-close" id="apiModalCloseBtn" aria-label="Close modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="modal-header">
+                <i class="fa-solid fa-shield-halved modal-icon"></i>
+                <h3>Watchmode API & AWS Config</h3>
+            </div>
+            <div class="modal-content-box">
+                <p class="modal-desc">
+                    By default, the backend pulls the key securely from <strong>AWS Secrets Manager</strong> (`/AWS-Secrets-Manager-Demo/third-party-token`).
+                </p>
+                <p class="modal-desc">
+                    You can also input your custom Watchmode API Key below for instant browser testing:
+                </p>
+
+                <div class="form-group">
+                    <label for="apiKeyInput">Watchmode API Key</label>
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-key"></i>
+                        <input type="text" id="apiKeyInput" placeholder="Enter your key from api.watchmode.com...">
+                    </div>
+                </div>
+
+                <div class="config-status-card" id="configStatusDetails">
+                    <!-- Populated dynamically -->
+                </div>
+
+                <div class="modal-actions">
+                    <button class="btn btn-secondary" id="btnClearApiKey">Clear Key</button>
+                    <button class="btn btn-primary" id="btnSaveApiKey">Save Key</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <div class="footer-container">
+            <p>&copy; 2026 CineStream. AWS ECS Fargate Microservice Demo.</p>
+            <div class="footer-links">
+                <a href="https://api.watchmode.com/dashboard" target="_blank" rel="noopener"><i class="fa-solid fa-arrow-up-right-from-square"></i> Watchmode Portal</a>
+                <a href="https://aws.amazon.com/secrets-manager/" target="_blank" rel="noopener"><i class="fa-brands fa-aws"></i> AWS Secrets Manager</a>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="js/app.js"></script>
+</body>
+</html>
