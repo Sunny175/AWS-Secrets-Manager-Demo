@@ -33,7 +33,7 @@
       "secrets": [
         {
           "name": "WATCHMODE_API_KEY",
-          "valueFrom": "arn:aws:secretsmanager:us-east-1:YOUR_ACCOUNT_ID:secret:/AWS-Secrets-Manager-Demo/third-party-token:watchmode-api-key::"
+          "valueFrom": "arn:aws:secretsmanager:us-east-1:YOUR_ACCOUNT_ID:secret:AWS-Secrets-Manager-Demo-third-party-token:watchmode-api-key::"
         }
       ],
       "logConfiguration": {

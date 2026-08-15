@@ -64,7 +64,7 @@ public class WatchmodeService {
                     baseUrl, apiKey, java.net.URLEncoder.encode(query, java.nio.charset.StandardCharsets.UTF_8));
             
             String jsonResponse = restClient.get()
-                    .uri(url)
+                    .uri(java.net.URI.create(url))
                     .retrieve()
                     .body(String.class);
 
@@ -100,7 +100,7 @@ public class WatchmodeService {
                     baseUrl, id, apiKey);
 
             String jsonResponse = restClient.get()
-                    .uri(url)
+                    .uri(java.net.URI.create(url))
                     .retrieve()
                     .body(String.class);
 
@@ -138,7 +138,7 @@ public class WatchmodeService {
                     baseUrl, apiKey);
 
             String jsonResponse = restClient.get()
-                    .uri(url)
+                    .uri(java.net.URI.create(url))
                     .retrieve()
                     .body(String.class);
 
