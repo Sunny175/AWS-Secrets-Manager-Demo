@@ -3,7 +3,7 @@ pipeline {
 
     environment {
         AWS_REGION         = 'us-east-1'
-        AWS_CREDENTIALS_ID = 'aws-credentials' // Jenkins Credential ID for AWS
+        AWS_CREDENTIALS_ID = 'aws-credentials' // Jenkins Credential ID (Leave as '' if using EC2 IAM Role)
         ECR_REPO_NAME      = 'watchmode-movie-app'
         APP_NAME           = 'watchmode-movie-app'
         IMAGE_TAG          = "${BUILD_NUMBER}"
@@ -29,7 +29,7 @@ pipeline {
             steps {
                 echo 'Building Java 25 Docker image...'
                 script {
-                    dockerImage = docker.build("${APP_NAME}:${IMAGE_TAG}")
+                    def dockerImage = docker.build("${APP_NAME}:${IMAGE_TAG}")
                 }
             }
         }
@@ -37,8 +37,12 @@ pipeline {
         stage('Push Image to Amazon ECR') {
             steps {
                 echo 'Pushing Docker image to Amazon ECR...'
-                withAWS(credentials: "${AWS_CREDENTIALS_ID}", region: "${AWS_REGION}") {
-                    script {
+                script {
+                    def awsConfig = [region: "${AWS_REGION}"]
+                    if (env.AWS_CREDENTIALS_ID?.trim()) {
+                        awsConfig['credentials'] = env.AWS_CREDENTIALS_ID
+                    }
+                    withAWS(awsConfig) {
                         def accountId = sh(script: "aws sts get-caller-identity --query Account --output text", returnStdout: true).trim()
                         def ecrUri    = "${accountId}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}"
 
@@ -58,14 +62,20 @@ pipeline {
         stage('Deploy to AWS ECS Fargate') {
             steps {
                 echo 'Updating AWS ECS Fargate service...'
-                withAWS(credentials: "${AWS_CREDENTIALS_ID}", region: "${AWS_REGION}") {
-                    sh """
-                        aws ecs update-service \
-                            --cluster watchmode-cluster \
-                            --service watchmode-service \
-                            --force-new-deployment \
-                            --region ${AWS_REGION}
-                    """
+                script {
+                    def awsConfig = [region: "${AWS_REGION}"]
+                    if (env.AWS_CREDENTIALS_ID?.trim()) {
+                        awsConfig['credentials'] = env.AWS_CREDENTIALS_ID
+                    }
+                    withAWS(awsConfig) {
+                        sh """
+                            aws ecs update-service \
+                                --cluster watchmode-cluster \
+                                --service watchmode-service \
+                                --force-new-deployment \
+                                --region ${AWS_REGION}
+                        """
+                    }
                 }
             }
         }
@@ -84,3 +94,4 @@ pipeline {
         }
     }
 }
+

@@ -103,7 +103,57 @@ Instead of manually creating AWS access key IDs, attach an **IAM Role** directly
 
 ---
 
+## ☁️ Step 3.5: One-Time AWS Infrastructure Setup (ECR, Secrets Manager & ECS Fargate)
+
+> 💡 **Where to run these commands**:
+> You can execute these `aws` CLI commands from any of the following locations:
+> 1. **AWS CloudShell** (Directly in AWS Console header — no installation needed)
+> 2. **SSH session on your Jenkins EC2 Instance**
+> 3. **Local Terminal / PowerShell** (if AWS CLI is configured via `aws configure`)
+
+### 1. Store Watchmode API Key in AWS Secrets Manager
+```bash
+aws secretsmanager create-secret \
+    --name "/AWS-Secrets-Manager-Demo/third-party-token" \
+    --description "Watchmode API key for Movie Discovery App" \
+    --secret-string '{"watchmode-api-key":"YOUR_ACTUAL_WATCHMODE_API_KEY"}' \
+    --region us-east-1
+```
+
+### 2. Create Amazon ECR Repository
+```bash
+aws ecr create-repository \
+    --repository-name watchmode-movie-app \
+    --region us-east-1
+```
+
+### 3. Update & Register ECS Task Definition
+Update `YOUR_ACCOUNT_ID` in `aws/task-definition.json` with your 12-digit AWS Account ID, then register the task definition:
+```bash
+aws ecs register-task-definition --cli-input-json file://aws/task-definition.json --region us-east-1
+```
+
+### 4. Create ECS Fargate Cluster & Service
+```bash
+# A. Create Cluster
+aws ecs create-cluster --cluster-name watchmode-cluster --region us-east-1
+
+# B. Create Fargate Service
+aws ecs create-service \
+    --cluster watchmode-cluster \
+    --service-name watchmode-service \
+    --task-definition watchmode-movie-app-task \
+    --desired-count 1 \
+    --launch-type FARGATE \
+    --network-configuration "awsvpcConfiguration={subnets=[subnet-xxx],securityGroups=[sg-xxx],assignPublicIp=ENABLED}" \
+    --region us-east-1
+```
+*(Replace `subnet-xxx` and `sg-xxx` with your Default VPC Subnet ID and Security Group ID)*.
+
+---
+
 ## 🔓 Step 4: Unlock & Setup Jenkins Web UI
+
 
 1. Get initial admin password from EC2 terminal:
    ```bash
