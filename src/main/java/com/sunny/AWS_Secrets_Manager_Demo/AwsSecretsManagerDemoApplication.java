@@ -2,7 +2,9 @@ package com.sunny.AWS_Secrets_Manager_Demo;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.cache.annotation.EnableCaching;
 
+@EnableCaching
 @SpringBootApplication
 public class AwsSecretsManagerDemoApplication {
 

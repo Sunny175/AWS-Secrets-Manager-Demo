@@ -31,3 +31,42 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Environment & Secret Configuration Files ###
+.env
+.env.*
+*.env
+application-local.yaml
+application-local.yml
+application-local.properties
+application-dev.yaml
+application-dev.yml
+application-dev.properties
+application-secrets.yaml
+application-secrets.yml
+application-secrets.properties
+secrets.yaml
+secrets.yml
+secrets.json
+credentials
+credentials.json
+aws-credentials*
+
+### Private Keys & Certificates ###
+*.pem
+*.key
+*.pkcs12
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.asc
+
+### Logs & OS System Files ###
+*.log
+pipelineLog.txt
+logs/
+.DS_Store
+Thumbs.db
+
+

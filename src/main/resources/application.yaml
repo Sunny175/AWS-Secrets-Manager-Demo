@@ -2,7 +2,7 @@ spring:
   application:
     name: AWS-Secrets-Manager-Demo
   config:
-    import: "optional:aws-secretsmanager:/AWS-Secrets-Manager-Demo/third-party-token"
+    import: optional:aws-secretsmanager:/AWS-Secrets-Manager-Demo-third-party-token
 
 cloud:
   aws:
@@ -10,7 +10,7 @@ cloud:
       static: us-east-1
 
 watchmode:
-  api-key: ${WATCHMODE_API_KEY}
+  api-key: ${WATCHMODE_API_KEY:watchmode-api-key}
   base-url: https://api.watchmode.com/v1
 
 

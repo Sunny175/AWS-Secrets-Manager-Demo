@@ -104,7 +104,7 @@ The Watchmode API key is configured in `src/main/resources/application.yaml`:
 
 ```yaml
 watchmode:
-  api-key: ${WATCHMODE_API_KEY:dxg7HVmbNayz1vBiogfjLWOEQs90XFa3msEzjtGM}
+  api-key: ${WATCHMODE_API_KEY}
   base-url: https://api.watchmode.com/v1
 ```
 
@@ -159,26 +159,46 @@ A production-ready declarative **[Jenkinsfile](file:///c:/Users/Sunny/SpringBoot
 
 ## 📁 Project Folder Structure
 
-
-
 ```
 AWS-Secrets-Manager-Demo/
+├── .mvn/                         # Maven Wrapper binary & configuration
 ├── aws/
-│   └── task-definition.json      # AWS ECS Fargate Task Definition
+│   └── task-definition.json      # AWS ECS Fargate Task Definition schema
 ├── src/
 │   ├── main/
 │   │   ├── java/com/sunny/AWS_Secrets_Manager_Demo/
-│   │   │   ├── config/           # RestClient & ObjectMapper Beans
-│   │   │   ├── controller/       # MovieController REST endpoints
-│   │   │   ├── dto/              # Movie, Details, StreamingSource DTOs
-│   │   │   └── service/          # WatchmodeService API Integration & Fallback
+│   │   │   ├── config/           # Spring Configuration & RestClient Beans
+│   │   │   │   └── WatchmodeConfig.java
+│   │   │   ├── controller/       # Spring MVC REST API Controller
+│   │   │   │   └── MovieController.java
+│   │   │   ├── dto/              # Data Transfer Objects (Movie, Details, StreamingSource)
+│   │   │   │   ├── MovieDetails.java
+│   │   │   │   ├── MovieSearchResult.java
+│   │   │   │   └── StreamingSource.java
+│   │   │   ├── service/          # Service layer & Watchmode API integration
+│   │   │   │   └── WatchmodeService.java
+│   │   │   ├── AwsSecretsManagerDemoApplication.java # Spring Boot main entry point
+│   │   │   └── ServletInitializer.java              # WAR/Deployment Initializer
 │   │   └── resources/
-│   │       ├── application.yaml  # Spring Boot & AWS Configuration
-│   │       └── static/           # Web UI (index.html, styles.css, app.js)
-├── Dockerfile                    # Multi-stage Docker Build file
-├── DEPLOY-FARGATE.md             # AWS ECS Fargate Deployment Guide
-├── pom.xml                       # Maven Dependencies & Plugins
-└── README.md                     # Project Documentation
+│   │       ├── static/           # Frontend Web UI (HTML5, Vanilla CSS, JS)
+│   │       │   ├── css/
+│   │       │   │   └── styles.css
+│   │       │   ├── js/
+│   │       │   │   └── app.js
+│   │       │   └── index.html
+│   │       └── application.yaml  # Spring Boot & AWS Secrets Manager configuration
+│   └── test/                     # Unit & Integration Tests
+│       └── java/com/sunny/AWS_Secrets_Manager_Demo/
+│           └── AwsSecretsManagerDemoApplicationTests.java
+├── .gitignore                    # Git tracking exclusion rules (security & build artifacts)
+├── DEPLOY-FARGATE.md             # Guide for manual AWS ECS Fargate Deployment
+├── Dockerfile                    # Multi-stage Java 25 Docker Container Definition
+├── JENKINS-EC2-TO-FARGATE.md     # Guide for hosting Jenkins on AWS EC2 -> Fargate CI/CD
+├── JENKINS.md                    # Guide for Jenkins Pipeline & Credentials setup
+├── Jenkinsfile                   # Declarative CI/CD Pipeline script
+├── mvnw / mvnw.cmd               # Maven Wrapper execution scripts
+├── pom.xml                       # Maven Project Object Model (Dependencies & Plugins)
+└── README.md                     # Application overview & documentation
 ```
 
 ---

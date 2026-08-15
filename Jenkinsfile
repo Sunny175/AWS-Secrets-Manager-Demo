@@ -3,9 +3,11 @@ pipeline {
 
     environment {
         AWS_REGION         = 'us-east-1'
-        AWS_CREDENTIALS_ID = 'aws-credentials' // Jenkins Credential ID for AWS
+        AWS_CREDENTIALS_ID = '' // Set to 'aws-credentials' if using Jenkins Credentials Manager, or leave '' to use EC2 IAM Role
         ECR_REPO_NAME      = 'watchmode-movie-app'
         APP_NAME           = 'watchmode-movie-app'
+        ECS_CLUSTER_NAME   = 'movie-api-cluster' // Set to your ECS cluster name in AWS
+        ECS_SERVICE_NAME   = 'movie-api-service' // Set to your ECS service name in AWS
         IMAGE_TAG          = "${BUILD_NUMBER}"
     }
 
@@ -29,7 +31,7 @@ pipeline {
             steps {
                 echo 'Building Java 25 Docker image...'
                 script {
-                    dockerImage = docker.build("${APP_NAME}:${IMAGE_TAG}")
+                    def dockerImage = docker.build("${APP_NAME}:${IMAGE_TAG}")
                 }
             }
         }
@@ -37,8 +39,8 @@ pipeline {
         stage('Push Image to Amazon ECR') {
             steps {
                 echo 'Pushing Docker image to Amazon ECR...'
-                withAWS(credentials: "${AWS_CREDENTIALS_ID}", region: "${AWS_REGION}") {
-                    script {
+                script {
+                    def pushAction = {
                         def accountId = sh(script: "aws sts get-caller-identity --query Account --output text", returnStdout: true).trim()
                         def ecrUri    = "${accountId}.dkr.ecr.${AWS_REGION}.amazonaws.com/${ECR_REPO_NAME}"
 
@@ -51,6 +53,23 @@ pipeline {
                         sh "docker push ${ecrUri}:${IMAGE_TAG}"
                         sh "docker push ${ecrUri}:latest"
                     }
+
+                    if (env.AWS_CREDENTIALS_ID?.trim()) {
+                        try {
+                            withAWS(credentials: env.AWS_CREDENTIALS_ID, region: "${AWS_REGION}") {
+                                pushAction()
+                            }
+                        } catch (Exception e) {
+                            echo "Credential '${env.AWS_CREDENTIALS_ID}' not found or failed (${e.message}). Falling back to EC2 IAM Role..."
+                            withAWS(region: "${AWS_REGION}") {
+                                pushAction()
+                            }
+                        }
+                    } else {
+                        withAWS(region: "${AWS_REGION}") {
+                            pushAction()
+                        }
+                    }
                 }
             }
         }
@@ -58,14 +77,33 @@ pipeline {
         stage('Deploy to AWS ECS Fargate') {
             steps {
                 echo 'Updating AWS ECS Fargate service...'
-                withAWS(credentials: "${AWS_CREDENTIALS_ID}", region: "${AWS_REGION}") {
-                    sh """
-                        aws ecs update-service \
-                            --cluster watchmode-cluster \
-                            --service watchmode-service \
-                            --force-new-deployment \
-                            --region ${AWS_REGION}
-                    """
+                script {
+                    def deployAction = {
+                        sh """
+                            aws ecs update-service \
+                                --cluster ${ECS_CLUSTER_NAME} \
+                                --service ${ECS_SERVICE_NAME} \
+                                --force-new-deployment \
+                                --region ${AWS_REGION}
+                        """
+                    }
+
+                    if (env.AWS_CREDENTIALS_ID?.trim()) {
+                        try {
+                            withAWS(credentials: env.AWS_CREDENTIALS_ID, region: "${AWS_REGION}") {
+                                deployAction()
+                            }
+                        } catch (Exception e) {
+                            echo "Credential '${env.AWS_CREDENTIALS_ID}' not found or failed (${e.message}). Falling back to EC2 IAM Role..."
+                            withAWS(region: "${AWS_REGION}") {
+                                deployAction()
+                            }
+                        }
+                    } else {
+                        withAWS(region: "${AWS_REGION}") {
+                            deployAction()
+                        }
+                    }
                 }
             }
         }
@@ -84,3 +122,6 @@ pipeline {
         }
     }
 }
+
+
+
