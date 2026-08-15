@@ -25,12 +25,17 @@
             <div class="logo">
                 <i class="fa-solid fa-clapperboard logo-icon"></i>
                 <span class="logo-text">Cine<span class="highlight">Stream</span></span>
-                <span class="badge badge-aws" id="awsStatusBadge">
+                <span class="badge badge-aws clickable" id="awsStatusBadge" title="Click to view AWS Secrets Manager & Telemetry">
                     <i class="fa-brands fa-aws"></i> AWS Fargate Ready
                 </span>
             </div>
             
             <div class="nav-actions">
+                <button class="btn btn-glass" id="btnNavWatchlist" title="View Saved Movies">
+                    <i class="fa-solid fa-bookmark"></i>
+                    <span>Watchlist</span>
+                    <span class="badge-count" id="navWatchlistBadge">0</span>
+                </button>
                 <button class="btn btn-glass" id="btnApiKeyConfig" title="Configure Watchmode API Key">
                     <i class="fa-solid fa-key"></i>
                     <span id="apiKeyStatusLabel">API Key</span>
@@ -59,6 +64,9 @@
                     <form id="searchForm" class="search-box">
                         <i class="fa-solid fa-magnifying-glass search-icon"></i>
                         <input type="text" id="searchInput" placeholder="Search movies (e.g. Inception, Interstellar, Batman)..." autocomplete="off" required>
+                        <button type="button" id="searchClearBtn" class="search-clear hidden" title="Clear search">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
                         <button type="submit" class="btn btn-primary btn-search">
                             <span>Search</span>
                             <i class="fa-solid fa-arrow-right"></i>
@@ -73,6 +81,9 @@
                     <button class="chip" data-genre="sci-fi"><i class="fa-solid fa-user-astronaut"></i> Sci-Fi</button>
                     <button class="chip" data-genre="drama"><i class="fa-solid fa-masks-theater"></i> Drama</button>
                     <button class="chip" data-genre="top-rated"><i class="fa-solid fa-star"></i> Top Rated</button>
+                    <button class="chip chip-watchlist" data-genre="watchlist">
+                        <i class="fa-solid fa-bookmark"></i> Watchlist <span class="chip-count" id="watchlistCount">0</span>
+                    </button>
                 </div>
             </div>
         </section>
@@ -80,14 +91,27 @@
         <!-- Movie Grid Section -->
         <section class="movies-section">
             <div class="section-header">
-                <h2 id="sectionTitle" class="section-title">Popular Releases</h2>
-                <span id="resultsCount" class="results-count">Showing top results</span>
+                <div class="section-title-wrap">
+                    <h2 id="sectionTitle" class="section-title">Popular Releases</h2>
+                    <span id="resultsCount" class="results-count">Showing top results</span>
+                </div>
+                <!-- Media Type Switcher -->
+                <div class="media-type-toggle" id="mediaTypeToggle">
+                    <button class="type-btn active" data-type="all">All</button>
+                    <button class="type-btn" data-type="movie">Movies</button>
+                    <button class="type-btn" data-type="tv">TV Shows</button>
+                </div>
             </div>
 
-            <!-- Loader -->
+            <!-- Loader (Skeleton Grid) -->
             <div id="loader" class="loader-container hidden">
-                <div class="spinner"></div>
-                <p>Querying Watchmode API & AWS Secrets...</p>
+                <div class="skeleton-grid">
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                    <div class="skeleton-card"></div>
+                </div>
+                <p class="loader-status-text"><i class="fa-solid fa-arrows-rotate fa-spin"></i> Fetching from Watchmode & AWS Secrets...</p>
             </div>
 
             <!-- Movies Grid -->
@@ -98,8 +122,8 @@
             <!-- Empty State -->
             <div id="emptyState" class="empty-state hidden">
                 <i class="fa-solid fa-film empty-icon"></i>
-                <h3>No movies found</h3>
-                <p>Try searching for a different movie title or check your API key configuration.</p>
+                <h3 id="emptyTitle">No movies found</h3>
+                <p id="emptyDesc">Try searching for a different movie title or check your API key configuration.</p>
             </div>
         </section>
     </main>
@@ -154,6 +178,55 @@
             </div>
         </div>
     </div>
+
+    <!-- AWS Diagnostics & Telemetry Modal -->
+    <div id="telemetryModal" class="modal-overlay hidden">
+        <div class="modal-card modal-sm glass-panel">
+            <button class="modal-close" id="telemetryModalCloseBtn" aria-label="Close modal">
+                <i class="fa-solid fa-xmark"></i>
+            </button>
+            <div class="modal-header">
+                <i class="fa-brands fa-aws modal-icon" style="color: var(--aws-orange)"></i>
+                <h3>AWS Secrets & System Telemetry</h3>
+            </div>
+            <div class="modal-content-box">
+                <div class="telemetry-grid" id="telemetryDetails">
+                    <div class="telemetry-item">
+                        <span class="telemetry-label">Status</span>
+                        <span class="telemetry-val text-success"><i class="fa-solid fa-circle-check"></i> Healthy (UP)</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="telemetry-label">AWS Region</span>
+                        <span class="telemetry-val" id="telemetryRegion">us-east-1</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="telemetry-label">Secrets Manager Path</span>
+                        <span class="telemetry-val code-val">/AWS-Secrets-Manager-Demo/third-party-token</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="telemetry-label">Active Key Resolver</span>
+                        <span class="telemetry-val" id="telemetryKeySource">AWS Secrets Manager</span>
+                    </div>
+                    <div class="telemetry-item">
+                        <span class="telemetry-label">Spring Caching</span>
+                        <span class="telemetry-val text-accent"><i class="fa-solid fa-bolt"></i> Enabled (In-Memory)</span>
+                    </div>
+                </div>
+
+                <div class="modal-actions" style="margin-top: 1.5rem;">
+                    <button class="btn btn-secondary" id="btnClearBackendCache" title="Evict Spring Boot Cache">
+                        <i class="fa-solid fa-broom"></i> Clear Cache
+                    </button>
+                    <button class="btn btn-primary" id="btnTestAwsConnection">
+                        <i class="fa-solid fa-rotate-right"></i> Refresh Diagnostics
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notification Container -->
+    <div id="toastContainer" class="toast-container"></div>
 
     <!-- Footer -->
     <footer class="footer">

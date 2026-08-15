@@ -6,6 +6,8 @@ import com.sunny.AWS_Secrets_Manager_Demo.dto.MovieDetails;
 import com.sunny.AWS_Secrets_Manager_Demo.dto.MovieSearchResult;
 import com.sunny.AWS_Secrets_Manager_Demo.dto.StreamingSource;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestClient;
 
@@ -45,6 +47,12 @@ public class WatchmodeService {
         return resolveApiKey(customApiKey) != null;
     }
 
+    @CacheEvict(value = {"searchResults", "movieDetails", "popularMovies"}, allEntries = true)
+    public void clearCache() {
+        System.out.println("CineStream Spring Cache Evicted.");
+    }
+
+    @Cacheable(value = "searchResults", key = "#query.toLowerCase() + '_' + (#customApiKey != null ? #customApiKey : 'default')")
     public List<MovieSearchResult> searchMovies(String query, String customApiKey) {
         String apiKey = resolveApiKey(customApiKey);
         if (apiKey == null) {
@@ -52,7 +60,7 @@ public class WatchmodeService {
         }
 
         try {
-            String url = String.format("%s/search/?apiKey=%s&search_field=name&search_value=%s&types=movie",
+            String url = String.format("%s/search/?apiKey=%s&search_field=name&search_value=%s&types=movie,tv_series",
                     baseUrl, apiKey, java.net.URLEncoder.encode(query, java.nio.charset.StandardCharsets.UTF_8));
             
             String jsonResponse = restClient.get()
@@ -80,6 +88,7 @@ public class WatchmodeService {
         }
     }
 
+    @Cacheable(value = "movieDetails", key = "#id + '_' + (#customApiKey != null ? #customApiKey : 'default')")
     public MovieDetails getMovieDetails(Long id, String customApiKey) {
         String apiKey = resolveApiKey(customApiKey);
         if (apiKey == null) {
@@ -102,6 +111,11 @@ public class WatchmodeService {
             if (details.getBackdrop() == null) {
                 details.setBackdrop(getBackdropForMovie(details.getTitle(), details.getId()));
             }
+            if (details.getTrailer() == null || details.getTrailer().isBlank()) {
+                details.setTrailer(getTrailerForMovie(details.getTitle()));
+            } else {
+                details.setTrailer(formatYouTubeEmbedUrl(details.getTrailer()));
+            }
             if (details.getSources() == null || details.getSources().isEmpty()) {
                 details.setSources(getMockSources());
             }
@@ -112,6 +126,7 @@ public class WatchmodeService {
         }
     }
 
+    @Cacheable(value = "popularMovies", key = "#customApiKey != null ? #customApiKey : 'default'")
     public List<MovieSearchResult> getPopularMovies(String customApiKey) {
         String apiKey = resolveApiKey(customApiKey);
         if (apiKey == null) {
@@ -268,7 +283,37 @@ public class WatchmodeService {
         details.setBackdrop("https://images.unsplash.com/photo-1578632767115-351597cf2477?q=80&w=1200&auto=format&fit=crop");
         details.setGenreNames(List.of("Sci-Fi", "Action", "Adventure", "Drama"));
         details.setSources(getMockSources());
-        details.setTrailer("https://www.youtube.com/watch?v=dQw4w9WgXcQ");
+        details.setTrailer(getTrailerForMovie(details.getTitle()));
         return details;
+    }
+
+    private String getTrailerForMovie(String title) {
+        if (title == null) return "https://www.youtube.com/embed/YoHD9XEInc0";
+        String t = title.toLowerCase();
+        if (t.contains("inception")) return "https://www.youtube.com/embed/YoHD9XEInc0";
+        if (t.contains("interstellar")) return "https://www.youtube.com/embed/zSWdZVtXT7E";
+        if (t.contains("dark knight") || t.contains("batman")) return "https://www.youtube.com/embed/EXeTwQWrcwY";
+        if (t.contains("dune")) return "https://www.youtube.com/embed/Way9Dexny3w";
+        if (t.contains("oppenheimer")) return "https://www.youtube.com/embed/uYPbbksJxIg";
+        if (t.contains("spider")) return "https://www.youtube.com/embed/cqGjhVJWtEg";
+        if (t.contains("matrix")) return "https://www.youtube.com/embed/vKQi3bBA1y8";
+        if (t.contains("avatar")) return "https://www.youtube.com/embed/d9MyW72ELq0";
+        return "https://www.youtube.com/embed/YoHD9XEInc0";
+    }
+
+    private String formatYouTubeEmbedUrl(String rawUrl) {
+        if (rawUrl == null || rawUrl.isBlank()) return getTrailerForMovie("");
+        if (rawUrl.contains("youtube.com/embed/")) return rawUrl;
+        if (rawUrl.contains("watch?v=")) {
+            String videoId = rawUrl.substring(rawUrl.indexOf("watch?v=") + 8);
+            if (videoId.contains("&")) videoId = videoId.substring(0, videoId.indexOf("&"));
+            return "https://www.youtube.com/embed/" + videoId;
+        }
+        if (rawUrl.contains("youtu.be/")) {
+            String videoId = rawUrl.substring(rawUrl.indexOf("youtu.be/") + 9);
+            if (videoId.contains("?")) videoId = videoId.substring(0, videoId.indexOf("?"));
+            return "https://www.youtube.com/embed/" + videoId;
+        }
+        return rawUrl;
     }
 }
