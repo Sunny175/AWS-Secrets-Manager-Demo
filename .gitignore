@@ -64,7 +64,9 @@ aws-credentials*
 
 ### Logs & OS System Files ###
 *.log
+pipelineLog.txt
 logs/
 .DS_Store
 Thumbs.db
+
 
