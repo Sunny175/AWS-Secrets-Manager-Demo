@@ -51,6 +51,8 @@ secrets.json
 credentials
 credentials.json
 aws-credentials*
+*_accessKeys.csv
+*.csv
 
 ### Private Keys & Certificates ###
 *.pem

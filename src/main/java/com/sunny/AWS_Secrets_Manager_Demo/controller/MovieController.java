@@ -64,7 +64,7 @@ public class MovieController {
         status.put("service", "Watchmode Movie Discovery API");
         status.put("awsSecretsManagerIntegration", true);
         status.put("awsRegion", region);
-        status.put("awsSecretPath", "/AWS-Secrets-Manager-Demo/third-party-token");
+        status.put("awsSecretPath", "AWS-Secrets-Manager-Demo-third-party-token");
         status.put("activeKeySource", customApiKey != null && !customApiKey.isBlank() ? "Request Header (Custom Key)" : "AWS Secrets Manager / Environment");
         status.put("cachingEnabled", true);
         status.put("apiKeyConfigured", isConfigured);
